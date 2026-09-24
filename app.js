@@ -490,8 +490,24 @@ async function doLogin() {
     }
     setLoginStatus("Berhasil masuk sebagai admin.", "ok");
     setTimeout(closeLogin, 500);
-  } catch (_) {
-    setLoginStatus("Gagal masuk: periksa email/kata sandi.", "err");
+  } catch (e) {
+    console.error("Firebase admin login error:", e);
+    const code = String(e?.code || "unknown");
+    const messages = {
+      "auth/invalid-credential": "Email atau kata sandi Firebase tidak cocok.",
+      "auth/invalid-login-credentials": "Email atau kata sandi Firebase tidak cocok.",
+      "auth/user-not-found": "Akun admin tidak ditemukan di Firebase Authentication.",
+      "auth/wrong-password": "Kata sandi Firebase salah.",
+      "auth/user-disabled": "Akun admin dinonaktifkan di Firebase Authentication.",
+      "auth/operation-not-allowed": "Metode Email/Password belum diaktifkan di Firebase Authentication.",
+      "auth/unauthorized-domain": "Domain situs ini belum terdaftar pada Authorized domains Firebase.",
+      "auth/network-request-failed": "Koneksi ke Firebase gagal. Periksa internet, firewall, atau pemblokir browser.",
+      "auth/too-many-requests": "Terlalu banyak percobaan login. Tunggu beberapa saat lalu coba lagi.",
+      "auth/invalid-api-key": "Firebase API key pada aplikasi tidak valid.",
+      "auth/app-not-authorized": "Aplikasi/domain ini tidak diizinkan menggunakan Firebase Authentication project ini."
+    };
+    const detail = messages[code] || (e?.message ? String(e.message) : "Kesalahan Firebase yang tidak dikenal.");
+    setLoginStatus(`Gagal masuk [${code}]: ${detail}`, "err");
   }
 }
 
