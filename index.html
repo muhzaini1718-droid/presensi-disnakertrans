@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>e-Presensi — Cek Kehadiran Pegawai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="bar-inner">
+    <div>
+      <p class="org" id="org-label">—</p>
+      <h1>e-Presensi</h1>
+      <p class="period" id="period-label">Memuat periode aktif…</p>
+    </div>
+    <div id="auth-area">
+      <button id="admin-login-btn">Admin</button>
+      <button id="admin-logout-btn" style="display:none;">Keluar Admin</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <section id="screen-nip">
+    <div class="nip-card">
+      <div class="nip-icon" aria-hidden="true">ID</div>
+      <p class="eyebrow">PORTAL PEGAWAI</p>
+      <h2>Cek Presensi Anda</h2>
+      <p class="nip-help">Masukkan NIP untuk melihat rekap presensi pada periode aktif. Tidak diperlukan PIN.</p>
+      <form id="nip-form" autocomplete="off">
+        <label for="nip-input">NIP</label>
+        <input type="text" id="nip-input" inputmode="numeric" pattern="[0-9]*" maxlength="18" placeholder="Masukkan 18 digit NIP" autocomplete="off" spellcheck="false">
+        <button type="submit" class="btn btn-primary nip-submit" id="nip-submit">Lihat Presensi</button>
+      </form>
+      <div id="nip-status" role="status" aria-live="polite"></div>
+      <p class="privacy-note">Akses menggunakan NIP saja. Siapa pun yang mengetahui NIP dapat membuka rekap NIP tersebut.</p>
+    </div>
+  </section>
+
+  <section id="screen-detail">
+    <button class="back-link" id="back-btn">← Keluar / Ganti NIP</button>
+
+    <div class="emp-card">
+      <div>
+        <p class="eyebrow">REKAP PEGAWAI</p>
+        <h2 id="d-nama">—</h2>
+        <p class="meta" id="d-meta">—</p>
+      </div>
+      <div class="period-badge" id="d-period">—</div>
+    </div>
+
+    <div id="alert-kosong"></div>
+
+    <section class="summary-section">
+      <div class="section-heading">
+        <h3>Ringkasan Status</h3>
+        <p>Hanya hari kerja yang sudah selesai yang dihitung untuk status kosong atau absensi tidak lengkap.</p>
+      </div>
+      <div id="summary-grid" class="summary-grid"></div>
+    </section>
+
+    <div class="issue-grid">
+      <div class="kosong-wrap">
+        <h3 class="kosong-title">Tanggal tanpa data absensi</h3>
+        <p class="kosong-sub">Hari ini, tanggal mendatang, Sabtu, dan Minggu tidak dihitung sebagai kekurangan.</p>
+        <ul id="kosong-list"></ul>
+      </div>
+
+      <div class="kosong-wrap partial-wrap">
+        <h3 class="kosong-title">Absensi tidak lengkap</h3>
+        <p class="kosong-sub">Hari saat hanya jam masuk atau hanya jam pulang yang tercatat.</p>
+        <ul id="partial-list"></ul>
+      </div>
+    </div>
+
+    <section class="history-wrap">
+      <div class="section-heading">
+        <h3>Riwayat Presensi Harian</h3>
+        <p>Dinas luar, izin, cuti, klaim, hadir, dan status lainnya ditampilkan per tanggal.</p>
+      </div>
+      <div id="history-list" class="history-list"></div>
+    </section>
+  </section>
+</main>
+
+<p id="sync-note"></p>
+
+<div id="login-overlay">
+  <div class="modal">
+    <button class="modal-close" id="login-close">✕</button>
+    <h3>Masuk sebagai Admin</h3>
+    <p>Login admin hanya digunakan untuk mengunggah dan memperbarui rekap absensi bulanan.</p>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="login-email" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Kata sandi</label>
+      <input type="password" id="login-password" autocomplete="current-password">
+    </div>
+    <div id="login-status"></div>
+    <div class="btn-row">
+      <button class="btn" id="login-cancel">Batal</button>
+      <button class="btn btn-primary" id="login-submit">Masuk</button>
+    </div>
+  </div>
+</div>
+
+<div id="admin-overlay">
+  <div class="modal">
+    <button class="modal-close" id="admin-close">✕</button>
+    <h3>Perbarui data absensi</h3>
+    <p>Unggah rekap bulanan (.xlsx/.xls). NIP dipakai hanya untuk membuat kunci hash SHA-256 dan tidak disimpan sebagai teks terbuka di Firestore.</p>
+    <div id="file-drop">Ketuk untuk memilih file .xlsx<br><span style="font-size:11.5px;">atau seret file ke sini</span></div>
+    <input type="file" id="file-input" accept=".xlsx,.xls">
+    <div id="admin-preview"></div>
+    <div id="admin-status"></div>
+    <div class="btn-row">
+      <button class="btn" id="admin-cancel">Batal</button>
+      <button class="btn btn-primary" id="admin-confirm" disabled>Simpan &amp; Aktifkan</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
